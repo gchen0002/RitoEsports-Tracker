@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Esports Schedule Tracker",
+  "version": "0.1.0",
+  "description": "Tracks upcoming Valorant and League of Legends competitive matches.",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "storage"
+  ]
+} 
