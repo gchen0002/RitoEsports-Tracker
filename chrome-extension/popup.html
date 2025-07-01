@@ -3,15 +3,36 @@
 <head>
     <title>Esports Schedule</title>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="header">
-        <h1>Matches</h1>
-        <div class="toggle-container">
-            <button id="valorant-btn" class="toggle-btn active">Valorant</button>
-            <button id="lol-btn" a="a" class="toggle-btn">LoL</button>
+    <div class="controls-container">
+        <div class="header">
+            <h1>Matches</h1>
+            <div class="toggle-container">
+                <button id="valorant-btn" class="toggle-btn active">Valorant</button>
+                <button id="lol-btn" a="a" class="toggle-btn">LoL</button>
+            </div>
         </div>
+        <div id="valorant-filters" class="filters-container">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="vct">VCT</button>
+            <button class="filter-btn" data-filter="challengers-gc">Challengers/GC</button>
+            <button class="filter-btn" data-filter="other">Other</button>
+        </div>
+        <div id="lol-filters" class="filters-container" style="display: none;">
+             <button class="filter-btn active" data-filter="all">All</button>
+             <button class="filter-btn" data-filter="lck">LCK</button>
+             <button class="filter-btn" data-filter="lec">LEC</button>
+             <button class="filter-btn" data-filter="lta">LTA</button>
+             <button class="filter-btn" data-filter="tournaments">Tournaments</button>
+             <button class="filter-btn" data-filter="other">Other</button>
+        </div>
+    </div>
+    <div class="time-filter-container">
+        <button id="upcoming-btn" class="time-filter-btn active">Upcoming</button>
+        <button id="past-btn" class="time-filter-btn">Past</button>
     </div>
     <div id="schedule-container">
         <!-- Matches will be injected here by popup.js -->
