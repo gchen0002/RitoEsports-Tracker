@@ -32,6 +32,7 @@ const valorantFilters = document.getElementById("valorant-filters");
 const lolFilters = document.getElementById("lol-filters");
 const valorantFilterBtns = document.querySelectorAll("#valorant-filters .filter-btn");
 const lolFilterBtns = document.querySelectorAll("#lol-filters .filter-btn");
+const liveBtn = document.getElementById("live-btn");
 const upcomingBtn = document.getElementById("upcoming-btn");
 const pastBtn = document.getElementById("past-btn");
 
@@ -40,7 +41,16 @@ let allMatches: Match[] = [];
 let selectedGame: 'Valorant' | 'LoL' = 'Valorant';
 let selectedValorantFilter: string = 'all';
 let selectedLolFilter: string = 'all';
-let selectedTimePeriod: 'upcoming' | 'past' = 'upcoming';
+let selectedTimePeriod: 'live' | 'upcoming' | 'past' = 'upcoming';
+
+// Keep track of current active tab and filter
+let currentTab: 'lol' | 'valorant' = 'lol';
+let currentFilter: string = 'all';
+
+const API_BASE_URL = 'https://k1174cudqb.execute-api.us-east-1.amazonaws.com';
+
+
+
 
 /**
  * Fetches the match schedule from the backend API.
@@ -66,10 +76,12 @@ async function fetchSchedule(): Promise<Match[]> {
 function renderMatches(): void {
     if (!container) return;
 
-    // 1. Filter by time period (Upcoming vs. Past)
+    // 1. Filter by time period (Live, Upcoming, Past)
     let timeFilteredMatches = allMatches.filter(match => {
-        if (selectedTimePeriod === 'upcoming') {
-            return match.status === 'not_started' || match.status === 'running';
+        if (selectedTimePeriod === 'live') {
+            return match.status === 'running';
+        } else if (selectedTimePeriod === 'upcoming') {
+            return match.status === 'not_started';
         } else { // 'past'
             return match.status === 'finished' || match.status === 'canceled';
         }
@@ -129,11 +141,29 @@ function renderMatches(): void {
         });
     }
 
+    // 4. Sort matches by time based on the selected period
+    fullyFilteredMatches.sort((a, b) => {
+        const timeA = new Date(a.time).getTime();
+        const timeB = new Date(b.time).getTime();
+        
+        if (selectedTimePeriod === 'live') {
+            // For live matches: sort by start time (earliest first)
+            return timeA - timeB;
+        } else if (selectedTimePeriod === 'upcoming') {
+            // For upcoming matches: sort ascending (earliest first)
+            return timeA - timeB;
+        } else {
+            // For past matches: sort descending (most recent completed first)
+            return timeB - timeA;
+        }
+    });
+
     // Clear any previous content
     container.innerHTML = "";
 
     if (fullyFilteredMatches.length === 0) {
-        container.innerHTML = `<p>No ${selectedTimePeriod} ${selectedGame} matches found.</p>`;
+        const periodText = selectedTimePeriod === 'live' ? 'live' : selectedTimePeriod;
+        container.innerHTML = `<p>No ${periodText} ${selectedGame} matches found.</p>`;
         return;
     }
 
@@ -142,22 +172,45 @@ function renderMatches(): void {
         const matchElement = document.createElement('div');
         matchElement.className = 'match';
         
-        // Choose the best title: prefer series, fallback to leagueName, then to game
-        const title = (match.series && match.series.length > 4) 
-                      ? match.series 
-                      : (match.leagueName || match.game);
+        // Add live styling for running matches
+        if (match.status === 'running') {
+            matchElement.classList.add('live');
+        }
         
-        const time = match.time ? new Date(match.time).toLocaleString(undefined, {
-            year: 'numeric',
-            month: 'numeric',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit'
-        }) : 'Date TBD';
+        // Build title: league (series)
+        let title = match.leagueName || 'Unknown League';
+        if (match.series) {
+            title += ` (${match.series})`;
+        }
 
-        // Use a placeholder for missing logos, or just an empty string.
-        const teamALogo = match.teamA_logo || '';
-        const teamBLogo = match.teamB_logo || '';
+        // Format the time differently for live, past vs upcoming matches
+        const matchTime = new Date(match.time);
+        let timeDisplay: string;
+        
+        if (match.status === 'running') {
+            // For live matches, show LIVE indicator
+            timeDisplay = `<div class="live-indicator"><div class="live-dot"></div>LIVE</div>`;
+        } else if (match.status === 'finished' || match.status === 'canceled') {
+            // For past matches, show just the date
+            timeDisplay = matchTime.toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short', 
+                day: 'numeric',
+                year: 'numeric'
+            });
+        } else {
+            // For upcoming matches, show date and time
+            timeDisplay = matchTime.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric'
+            }) + ', ' + matchTime.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+
 
         // Determine if this is a finished match with scores
         const isFinished = match.status === 'finished';
@@ -167,6 +220,7 @@ function renderMatches(): void {
         const teamAIsWinner = hasScores && match.winner_id === match.teamA_id;
         const teamBIsWinner = hasScores && match.winner_id === match.teamB_id;
 
+        // Build score display for finished matches
         let scoreDisplay = '';
         if (hasScores) {
             scoreDisplay = `
@@ -178,54 +232,42 @@ function renderMatches(): void {
             `;
         }
 
-        // Add forfeit indicator for canceled matches
-        const statusIndicator = match.status === 'canceled' ? '<div class="status-indicator canceled">CANCELED</div>' : '';
-        
-        // Create expandable details for finished matches
-        const detailsSection = isFinished ? `
-            <div class="match-details" style="display: none;">
-                <div class="details-content">
-                    ${hasScores ? `
-                        <p><strong>Final Score:</strong> ${match.teamA} ${match.teamA_score} - ${match.teamB_score} ${match.teamB}</p>
-                        ${match.number_of_games ? `<p><strong>Best of:</strong> ${match.number_of_games}</p>` : ''}
-                        ${teamAIsWinner || teamBIsWinner ? `<p><strong>Winner:</strong> ${teamAIsWinner ? match.teamA : match.teamB}</p>` : ''}
-                    ` : '<p>Match completed - detailed results not available</p>'}
+        // Build match summary
+        let matchSummary = '';
+        if (hasScores) {
+            const winnerName = teamAIsWinner ? match.teamA : teamBIsWinner ? match.teamB : 'No winner';
+            matchSummary = `
+                <div class="match-summary">
+                    <span class="winner-indicator">${winnerName} wins</span>
+                    ${match.number_of_games ? `<span class="series-info">Best of ${match.number_of_games}</span>` : ''}
                 </div>
-            </div>
-        ` : '';
+            `;
+        } else if (match.status === 'canceled') {
+            matchSummary = `
+                <div class="match-summary">
+                    <span class="status-indicator canceled">Canceled</span>
+                </div>
+            `;
+        }
 
         matchElement.innerHTML = `
-            <div class="league">${title}</div>
-            ${statusIndicator}
+            <div class="match-header">
+                <div class="league">${title}</div>
+            </div>
             <div class="teams">
                 <div class="team ${teamAIsWinner ? 'winner' : ''}">
-                    <img src="${teamALogo}" class="logo" style="display: ${teamALogo ? 'block' : 'none'};">
+                    ${match.teamA_logo ? `<img src="${match.teamA_logo}" alt="${match.teamA}" class="logo">` : ''}
                     <span>${match.teamA}</span>
                 </div>
-                ${scoreDisplay || '<span class="vs">vs</span>'}
+                ${scoreDisplay || '<div class="vs">vs</div>'}
                 <div class="team ${teamBIsWinner ? 'winner' : ''}">
-                    <img src="${teamBLogo}" class="logo" style="display: ${teamBLogo ? 'block' : 'none'};">
+                    ${match.teamB_logo ? `<img src="${match.teamB_logo}" alt="${match.teamB}" class="logo">` : ''}
                     <span>${match.teamB}</span>
                 </div>
             </div>
-            <div class="time">${time}</div>
-            ${isFinished ? '<button class="details-toggle">View Details</button>' : ''}
-            ${detailsSection}
+            <div class="match-time">${timeDisplay}</div>
+            ${matchSummary}
         `;
-
-        // Add click handler for details toggle
-        if (isFinished) {
-            const toggleButton = matchElement.querySelector('.details-toggle') as HTMLButtonElement;
-            const detailsDiv = matchElement.querySelector('.match-details') as HTMLDivElement;
-            
-            if (toggleButton && detailsDiv) {
-                toggleButton.addEventListener('click', () => {
-                    const isVisible = detailsDiv.style.display !== 'none';
-                    detailsDiv.style.display = isVisible ? 'none' : 'block';
-                    toggleButton.textContent = isVisible ? 'View Details' : 'Hide Details';
-                });
-            }
-        }
 
         container.appendChild(matchElement);
     });
@@ -257,17 +299,13 @@ async function main() {
         });
     });
 
+    liveBtn?.addEventListener('click', () => selectTimePeriod('live'));
     upcomingBtn?.addEventListener('click', () => selectTimePeriod('upcoming'));
     pastBtn?.addEventListener('click', () => selectTimePeriod('past'));
 
     if (container) {
         container.innerHTML = "<p>Loading schedule...</p>";
         allMatches = await fetchSchedule();
-        // --- START DEBUG LOG ---
-        // console.log("--- RAW DATA FROM BACKEND ---");
-        // console.log(JSON.stringify(allMatches, null, 2));
-        // console.log("--- END RAW DATA ---");
-        // --- END DEBUG LOG ---
         renderMatches();
     }
 }
@@ -332,21 +370,29 @@ function selectLolFilter(filter: string) {
 
 /**
  * Handles the logic for selecting a time period.
- * @param period The time period to select ('upcoming' or 'past')
+ * @param period The time period to select ('live', 'upcoming' or 'past')
  */
-function selectTimePeriod(period: 'upcoming' | 'past') {
+function selectTimePeriod(period: 'live' | 'upcoming' | 'past') {
     selectedTimePeriod = period;
 
-    if (period === 'upcoming') {
+    // Clear all active states
+    liveBtn?.classList.remove('active');
+    upcomingBtn?.classList.remove('active');
+    pastBtn?.classList.remove('active');
+
+    // Set the active state for the selected period
+    if (period === 'live') {
+        liveBtn?.classList.add('active');
+    } else if (period === 'upcoming') {
         upcomingBtn?.classList.add('active');
-        pastBtn?.classList.remove('active');
     } else {
         pastBtn?.classList.add('active');
-        upcomingBtn?.classList.remove('active');
     }
 
     renderMatches();
 }
+
+
 
 // Run the main function
 main(); 
