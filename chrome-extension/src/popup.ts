@@ -12,6 +12,12 @@ interface Match {
     series: string; // e.g., "Summer Split 2024", "Stage 2"
     teamA: string;
     teamB: string;
+    teamA_id?: number;
+    teamB_id?: number;
+    teamA_score?: number | null;
+    teamB_score?: number | null;
+    winner_id?: number | null;
+    number_of_games?: number | null;
     time: string;
     teamA_logo: string | null;
     teamB_logo: string | null;
@@ -153,21 +159,74 @@ function renderMatches(): void {
         const teamALogo = match.teamA_logo || '';
         const teamBLogo = match.teamB_logo || '';
 
+        // Determine if this is a finished match with scores
+        const isFinished = match.status === 'finished';
+        const hasScores = isFinished && match.teamA_score !== null && match.teamB_score !== null;
+        
+        // Determine winner styling
+        const teamAIsWinner = hasScores && match.winner_id === match.teamA_id;
+        const teamBIsWinner = hasScores && match.winner_id === match.teamB_id;
+
+        let scoreDisplay = '';
+        if (hasScores) {
+            scoreDisplay = `
+                <div class="score-container">
+                    <span class="score ${teamAIsWinner ? 'winner' : ''}">${match.teamA_score}</span>
+                    <span class="score-separator">-</span>
+                    <span class="score ${teamBIsWinner ? 'winner' : ''}">${match.teamB_score}</span>
+                </div>
+            `;
+        }
+
+        // Add forfeit indicator for canceled matches
+        const statusIndicator = match.status === 'canceled' ? '<div class="status-indicator canceled">CANCELED</div>' : '';
+        
+        // Create expandable details for finished matches
+        const detailsSection = isFinished ? `
+            <div class="match-details" style="display: none;">
+                <div class="details-content">
+                    ${hasScores ? `
+                        <p><strong>Final Score:</strong> ${match.teamA} ${match.teamA_score} - ${match.teamB_score} ${match.teamB}</p>
+                        ${match.number_of_games ? `<p><strong>Best of:</strong> ${match.number_of_games}</p>` : ''}
+                        ${teamAIsWinner || teamBIsWinner ? `<p><strong>Winner:</strong> ${teamAIsWinner ? match.teamA : match.teamB}</p>` : ''}
+                    ` : '<p>Match completed - detailed results not available</p>'}
+                </div>
+            </div>
+        ` : '';
+
         matchElement.innerHTML = `
             <div class="league">${title}</div>
+            ${statusIndicator}
             <div class="teams">
-                <div class="team">
+                <div class="team ${teamAIsWinner ? 'winner' : ''}">
                     <img src="${teamALogo}" class="logo" style="display: ${teamALogo ? 'block' : 'none'};">
                     <span>${match.teamA}</span>
                 </div>
-                <span class="vs">vs</span>
-                <div class="team">
+                ${scoreDisplay || '<span class="vs">vs</span>'}
+                <div class="team ${teamBIsWinner ? 'winner' : ''}">
                     <img src="${teamBLogo}" class="logo" style="display: ${teamBLogo ? 'block' : 'none'};">
                     <span>${match.teamB}</span>
                 </div>
             </div>
             <div class="time">${time}</div>
+            ${isFinished ? '<button class="details-toggle">View Details</button>' : ''}
+            ${detailsSection}
         `;
+
+        // Add click handler for details toggle
+        if (isFinished) {
+            const toggleButton = matchElement.querySelector('.details-toggle') as HTMLButtonElement;
+            const detailsDiv = matchElement.querySelector('.match-details') as HTMLDivElement;
+            
+            if (toggleButton && detailsDiv) {
+                toggleButton.addEventListener('click', () => {
+                    const isVisible = detailsDiv.style.display !== 'none';
+                    detailsDiv.style.display = isVisible ? 'none' : 'block';
+                    toggleButton.textContent = isVisible ? 'View Details' : 'Hide Details';
+                });
+            }
+        }
+
         container.appendChild(matchElement);
     });
 }
