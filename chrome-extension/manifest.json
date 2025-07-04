@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Esports Schedule Tracker",
-  "version": "0.1.0",
-  "description": "Tracks upcoming Valorant and League of Legends competitive matches.",
+  "name": "RitoEsports Tracker",
+  "version": "1.0.0",
+  "description": "Real-time esports schedules for League of Legends and Valorant tournaments with live match detection.",
   "action": {
     "default_popup": "popup.html"
   },
