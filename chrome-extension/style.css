@@ -356,4 +356,218 @@ h1 {
     padding: 3px 8px;
     text-transform: none;
     letter-spacing: normal;
+}
+
+/* Watch Links Styling */
+.match-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.watch-links {
+    display: flex;
+    align-items: center;
+}
+
+.watch-btn {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 70px;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 1px 3px rgba(220, 53, 69, 0.2);
+}
+
+.watch-btn:hover {
+    background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
+    transform: translateY(-1px);
+    text-decoration: none;
+    color: white;
+}
+
+.watch-btn svg {
+    flex-shrink: 0;
+}
+
+/* Find Stream Button - Different styling to indicate it's a search function */
+.watch-btn.find-stream {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
+}
+
+.watch-btn.find-stream:hover {
+    background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.4);
+}
+
+/* Dropdown container - keep visible when hovering over dropdown content */
+.watch-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* Keep dropdown visible during hover transitions */
+.watch-dropdown:hover .watch-btn {
+    background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+    transform: translateY(-1px);
+}
+
+.watch-dropdown:hover .dropdown-content,
+.watch-dropdown .dropdown-content:hover {
+    display: block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    min-width: 120px;
+    max-width: 160px;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    border-radius: 3px;
+    overflow: hidden;
+    top: calc(100% + 4px);
+    right: 0;
+    left: auto;
+    border: 1px solid #e9ecef;
+}
+
+/* Add invisible bridge to prevent hover gaps */
+.watch-dropdown::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: transparent;
+    z-index: 999;
+}
+
+.dropdown-content a {
+    color: #333;
+    padding: 8px 12px;
+    text-decoration: none;
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid #f8f9fa;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+}
+
+.dropdown-content a:last-child {
+    border-bottom: none;
+}
+
+.dropdown-content a:hover {
+    background-color: #f8f9fa;
+    color: #495057;
+}
+
+/* Style for official streams */
+.dropdown-content a.official {
+    color: #007bff;
+    font-weight: 600;
+}
+
+.dropdown-content a.official::before {
+    content: "⭐";
+    margin-right: 4px;
+    font-size: 10px;
+}
+
+/* Platform icons */
+.dropdown-content a[href*="twitch.tv"]::before {
+    content: "🟣";
+    margin-right: 4px;
+    font-size: 10px;
+}
+
+.dropdown-content a[href*="youtube.com"]::before,
+.dropdown-content a[href*="youtu.be"]::before {
+    content: "🔴";
+    margin-right: 4px;
+    font-size: 10px;
+}
+
+/* Override for official streams */
+.dropdown-content a.official[href*="twitch.tv"]::before {
+    content: "⭐🟣";
+    margin-right: 4px;
+    font-size: 10px;
+}
+
+.dropdown-content a.official[href*="youtube.com"]::before,
+.dropdown-content a.official[href*="youtu.be"]::before {
+    content: "⭐🔴";
+    margin-right: 4px;
+    font-size: 10px;
+}
+
+/* Platform icons for better UX */
+.platform-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+/* Responsive adjustments for watch links */
+@media (max-width: 400px) {
+    .watch-btn {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+    
+    .watch-btn svg {
+        width: 12px;
+        height: 12px;
+    }
+    
+    .watch-dropdown-content {
+        min-width: 160px;
+        right: -20px;
+    }
+}
+
+/* Loading and Error States */
+.loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.error-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: #dc3545;
+}
+
+.error-message p {
+    margin: 8px 0;
+    font-size: 14px;
+}
+
+.error-message p:first-child {
+    font-weight: 600;
+    font-size: 16px;
 } 

@@ -7,6 +7,13 @@
     "default_popup": "popup.html"
   },
   "permissions": [
-    "storage"
-  ]
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://p4w4yuvikkpnvjvnbsmkybd7de0cgqqn.lambda-url.us-east-1.on.aws/*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
+  }
 } 

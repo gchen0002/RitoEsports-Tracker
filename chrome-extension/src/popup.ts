@@ -1,40 +1,16 @@
 console.log("Rito Esports Tracker popup script loaded!");
 
 // The URL for our deployed backend API
-const API_URL = 'https://k1174cudqb.execute-api.us-east-1.amazonaws.com/schedule';
-
-// Cache configuration
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
-const CACHE_KEY = 'ritoesports_cache';
-
-interface CacheData {
-  data: any;
-  timestamp: number;
-}
-
-// Check cache before API call
-function getCachedData(): any | null {
-  const cached = localStorage.getItem(CACHE_KEY);
-  if (cached) {
-    const cacheData: CacheData = JSON.parse(cached);
-    const now = Date.now();
-    if (now - cacheData.timestamp < CACHE_DURATION) {
-      return cacheData.data;
-    }
-  }
-  return null;
-}
-
-// Save data to cache
-function setCachedData(data: any): void {
-  const cacheData: CacheData = {
-    data: data,
-    timestamp: Date.now()
-  };
-  localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-}
+const API_URL = 'https://p4w4yuvikkpnvjvnbsmkybd7de0cgqqn.lambda-url.us-east-1.on.aws/';
 
 // Define the structure of a Match object for TypeScript
+interface StreamData {
+    language: string;
+    main: boolean;
+    official: boolean;
+    raw_url: string;
+}
+
 interface Match {
     id: number;
     league: 'Valorant' | 'LoL'; // The table's partition key
@@ -53,6 +29,7 @@ interface Match {
     teamA_logo: string | null;
     teamB_logo: string | null;
     status: 'not_started' | 'running' | 'finished' | 'canceled';
+    streams?: StreamData[];
 }
 
 // --- DOM Elements ---
@@ -77,8 +54,6 @@ let selectedTimePeriod: 'live' | 'upcoming' | 'past' = 'upcoming';
 // Keep track of current active tab and filter
 let currentTab: 'lol' | 'valorant' = 'lol';
 let currentFilter: string = 'all';
-
-const API_BASE_URL = 'https://k1174cudqb.execute-api.us-east-1.amazonaws.com';
 
 
 
@@ -200,6 +175,73 @@ function renderMatches(): void {
         return;
     }
 
+    // Helper function to generate watch links HTML
+    function generateWatchLinksHTML(streams?: StreamData[], matchStatus?: string): string {
+        // Only show watch links for live and upcoming matches
+        if (matchStatus !== 'running' && matchStatus !== 'not_started') {
+            return '';
+        }
+
+        // If we have stream data from PandaScore, use it
+        if (streams && streams.length > 0) {
+            // Prioritize official streams and main streams
+            const sortedStreams = streams
+                .filter(stream => stream.raw_url) // Only streams with valid URLs
+                .sort((a, b) => {
+                    // Prioritize official streams first
+                    if (a.official && !b.official) return -1;
+                    if (!a.official && b.official) return 1;
+                    // Then prioritize main streams
+                    if (a.main && !b.main) return -1;
+                    if (!a.main && b.main) return 1;
+                    return 0;
+                });
+
+            if (sortedStreams.length === 1) {
+                // Single stream - direct link
+                const platform = detectStreamingPlatform(sortedStreams[0].raw_url);
+                return `<a href="${sortedStreams[0].raw_url}" target="_blank" class="watch-btn">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    Watch
+                </a>`;
+            } else if (sortedStreams.length > 1) {
+                // Multiple streams - dropdown
+                const streamOptions = sortedStreams.map(stream => {
+                    const platform = detectStreamingPlatform(stream.raw_url);
+                    const language = stream.language ? stream.language.toUpperCase() : 'EN';
+                    const label = `${platform}`;
+                    const className = stream.official ? 'official' : '';
+                    return `<a href="${stream.raw_url}" target="_blank" class="${className}">${label}</a>`;
+                }).join('');
+
+                return `<div class="watch-dropdown">
+                    <div class="watch-btn">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        Watch
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M7 10l5 5 5-5z"/>
+                        </svg>
+                    </div>
+                    <div class="dropdown-content">
+                        ${streamOptions}
+                    </div>
+                </div>`;
+            }
+        }
+
+        // Fallback: "Find Stream" button for matches without direct stream URLs
+        return `<button class="watch-btn find-stream">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            Find Stream
+        </button>`;
+    }
+
     // Create and append an element for each match
     fullyFilteredMatches.forEach(match => {
         const matchElement = document.createElement('div');
@@ -294,6 +336,7 @@ function renderMatches(): void {
         matchElement.innerHTML = `
             <div class="match-header">
                 <div class="league">${title}</div>
+                ${generateWatchLinksHTML(match.streams, match.status)}
             </div>
             <div class="teams">
                 <div class="team ${teamAIsWinner ? 'winner' : ''}">
@@ -318,48 +361,78 @@ function renderMatches(): void {
  * Main function that runs when the popup is opened.
  */
 async function main() {
-    console.log('RitoEsports Tracker: Starting main function');
-    
-    // Setup button listeners
-    valorantBtn?.addEventListener('click', () => selectGame('Valorant'));
-    lolBtn?.addEventListener('click', () => selectGame('LoL'));
+    try {
+        console.log('RitoEsports Tracker: Starting main function');
+        
+        // Setup button listeners first
+        valorantBtn?.addEventListener('click', () => selectGame('Valorant'));
+        lolBtn?.addEventListener('click', () => selectGame('LoL'));
 
-    valorantFilterBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const filter = btn.getAttribute('data-filter');
-            if (filter) {
-                selectValorantFilter(filter);
+        // Add event delegation for Find Stream buttons
+        container?.addEventListener('click', (event) => {
+            const target = event.target as HTMLElement;
+            if (target.classList.contains('find-stream') || target.closest('.find-stream')) {
+                const button = target.closest('.find-stream') as HTMLElement || target;
+                handleFindStream(button);
             }
         });
-    });
 
-    lolFilterBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const filter = btn.getAttribute('data-filter');
-            if (filter) {
-                selectLolFilter(filter);
-            }
+        valorantFilterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filter = btn.getAttribute('data-filter');
+                if (filter) {
+                    selectValorantFilter(filter);
+                }
+            });
         });
-    });
 
-    liveBtn?.addEventListener('click', () => selectTimePeriod('live'));
-    upcomingBtn?.addEventListener('click', () => selectTimePeriod('upcoming'));
-    pastBtn?.addEventListener('click', () => selectTimePeriod('past'));
+        lolFilterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filter = btn.getAttribute('data-filter');
+                if (filter) {
+                    selectLolFilter(filter);
+                }
+            });
+        });
 
-    if (container) {
-        container.innerHTML = "<p>Loading schedule...</p>";
-        try {
-            allMatches = await fetchScheduleData();
-            renderMatches();
-        } catch (error) {
-            console.error('Failed to load schedule data:', error);
+        liveBtn?.addEventListener('click', () => selectTimePeriod('live'));
+        upcomingBtn?.addEventListener('click', () => selectTimePeriod('upcoming'));
+        pastBtn?.addEventListener('click', () => selectTimePeriod('past'));
+        
+        // Show loading state
+        if (container) {
+            container.innerHTML = '<div class="loading">Loading matches...</div>';
+        }
+        
+        // Fetch schedule data with improved error handling
+        allMatches = await fetchScheduleData();
+        
+        // If no data available, show appropriate message
+        if (!allMatches || allMatches.length === 0) {
+            if (container) {
+                container.innerHTML = `
+                    <div class="error-message">
+                        <p>No matches available</p>
+                        <p>Check your internet connection and try refreshing</p>
+                    </div>
+                `;
+            }
+            return;
+        }
+        
+        console.log(`RitoEsports Tracker: Loaded ${allMatches.length} matches successfully`);
+        
+        // Continue with normal rendering
+        renderMatches();
+        
+    } catch (error) {
+        console.error('RitoEsports Tracker: Fatal error in main function:', error);
+        
+        if (container) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 20px; color: #dc3545;">
-                    <p><strong>Unable to load matches</strong></p>
-                    <p style="font-size: 14px; margin: 10px 0;">Check your internet connection and try again.</p>
-                    <button onclick="location.reload()" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-top: 10px;">
-                        Retry
-                    </button>
+                <div class="error-message">
+                    <p>Unable to load matches</p>
+                    <p>Please try again later</p>
                 </div>
             `;
         }
@@ -448,51 +521,137 @@ function selectTimePeriod(period: 'live' | 'upcoming' | 'past') {
     renderMatches();
 }
 
-async function fetchScheduleData(): Promise<any> {
-  const showSpinner = () => {
-    if (container) {
-      container.innerHTML = '<div class="spinner">Loading schedule...</div>';
+async function fetchScheduleData(): Promise<Match[]> {
+    const cacheKey = 'schedule-cache';
+    const cacheTimeKey = 'schedule-cache-time';
+    const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+
+    try {
+        // Check cache first
+        const cachedData = localStorage.getItem(cacheKey);
+        const cachedTime = localStorage.getItem(cacheTimeKey);
+        
+        if (cachedData && cachedTime) {
+            const timeElapsed = Date.now() - parseInt(cachedTime);
+            if (timeElapsed < CACHE_DURATION) {
+                console.log('RitoEsports Tracker: Using cached data');
+                return JSON.parse(cachedData);
+            }
+        }
+
+        console.log('RitoEsports Tracker: Fetching fresh data from API');
+        
+        // Fetch fresh data with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        // Lambda Function URL
+        const response = await fetch(API_URL, {
+            signal: controller.signal,
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        
+        // Cache the successful response
+        localStorage.setItem(cacheKey, JSON.stringify(data));
+        localStorage.setItem(cacheTimeKey, Date.now().toString());
+        
+        console.log('RitoEsports Tracker: Fresh data cached successfully');
+        return data;
+        
+    } catch (error) {
+        console.warn('RitoEsports Tracker: API fetch failed, checking for fallback data:', error);
+        
+        // Try to use any cached data as fallback, even if expired
+        const fallbackData = localStorage.getItem(cacheKey);
+        if (fallbackData) {
+            console.log('RitoEsports Tracker: Using expired cache as fallback');
+            return JSON.parse(fallbackData);
+        }
+        
+        // If no cached data available, return empty array instead of throwing
+        console.warn('RitoEsports Tracker: No cached data available, returning empty results');
+        return [];
     }
-  };
+}
 
-  const hideSpinner = () => {
-    if (container) {
-      const spinner = container.querySelector('.spinner');
-      if (spinner) {
-        spinner.remove();
-      }
+// Function to handle "Find Stream" button clicks
+function handleFindStream(button: HTMLElement) {
+    try {
+        console.log('Find Stream button clicked');
+        
+        // Get the match element and extract team names
+        const matchElement = button.closest('.match');
+        if (!matchElement) {
+            console.log('No match element found');
+            return;
+        }
+        
+        const teamElements = matchElement.querySelectorAll('.team span');
+        if (teamElements.length >= 2) {
+            const teamA = (teamElements[0] as HTMLElement).textContent?.trim() || '';
+            const teamB = (teamElements[1] as HTMLElement).textContent?.trim() || '';
+            
+            // Get league name from the header
+            const leagueElement = matchElement.querySelector('.league');
+            const leagueName = leagueElement?.textContent?.trim() || '';
+            
+            // Create search query
+            const searchQuery = `"${teamA}" vs "${teamB}" ${leagueName} live stream valorant`;
+            const twitchSearchUrl = `https://www.twitch.tv/search?term=${encodeURIComponent(searchQuery)}`;
+            
+            console.log('Opening Twitch search for:', searchQuery);
+            
+            // Try chrome.tabs API first, fallback to window.open
+            if (chrome && chrome.tabs) {
+                chrome.tabs.create({ url: twitchSearchUrl });
+            } else {
+                window.open(twitchSearchUrl, '_blank');
+            }
+        }
+    } catch (error) {
+        console.error('Error in findStream:', error);
+        // Fallback: open general Twitch search
+        const fallbackUrl = 'https://www.twitch.tv/directory/category/valorant';
+        if (chrome && chrome.tabs) {
+            chrome.tabs.create({ url: fallbackUrl });
+        } else {
+            window.open(fallbackUrl, '_blank');
+        }
     }
-  };
+}
 
-  // Check cache first
-  const cachedData = getCachedData();
-  if (cachedData) {
-    return cachedData;
-  }
-
-  showSpinner();
-  
-  try {
-    console.log('Fetching data from API...');
-    const response = await fetch('https://k1174cudqb.execute-api.us-east-1.amazonaws.com/schedule');
+// Function to detect streaming platform from URL
+function detectStreamingPlatform(url: string): string {
+    const lowerUrl = url.toLowerCase();
     
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (lowerUrl.includes('twitch.tv')) {
+        return 'Twitch';
+    } else if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) {
+        return 'YouTube';
+    } else if (lowerUrl.includes('facebook.com')) {
+        return 'Facebook';
+    } else if (lowerUrl.includes('kick.com')) {
+        return 'Kick';
+    } else if (lowerUrl.includes('douyu.com')) {
+        return 'Douyu';
+    } else if (lowerUrl.includes('huya.com')) {
+        return 'Huya';
+    } else if (lowerUrl.includes('bilibili.com')) {
+        return 'Bilibili';
+    } else {
+        return 'Stream';
     }
-
-    const data = await response.json();
-    console.log(`Successfully fetched ${data.length} matches from API`);
-    
-    // Cache the successful response
-    setCachedData(data);
-    
-    hideSpinner();
-    return data;
-  } catch (error) {
-    hideSpinner();
-    console.error('Error fetching schedule:', error);
-    throw error;
-  }
 }
 
 // Run the main function
