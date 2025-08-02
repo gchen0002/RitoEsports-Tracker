@@ -1,0 +1,22 @@
+{
+  "name": "chrome-extension",
+  "version": "1.0.0",
+  "description": "",
+  "main": "popup.js",
+  "scripts": {
+    "build-css": "tailwindcss -i ./src/styles.css -o ./style.css --watch=false",
+    "build-css:watch": "tailwindcss -i ./src/styles.css -o ./style.css --watch",
+    "build": "npm run build-css && npx tsc",
+    "dev": "npm run build-css:watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17"
+  }
+}

@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="controls-container">
-        <div class="header">
-            <h1>RitoEsports Tracker</h1>
+<body class="w-extension font-sans p-3 bg-background-light dark:bg-background-dark m-0">
+    <div class="mb-4">
+        <div class="flex justify-between items-center mb-2">
+            <h1 class="text-xl text-gray-800 dark:text-gray-200 m-0 font-semibold">RitoEsports Tracker</h1>
             <div class="toggle-container">
                 <button id="valorant-btn" class="toggle-btn active">Valorant</button>
                 <button id="lol-btn" class="toggle-btn">LoL</button>
@@ -35,7 +35,7 @@
         <button id="upcoming-btn" class="time-filter-btn active">Upcoming</button>
         <button id="past-btn" class="time-filter-btn">Past</button>
     </div>
-    <div id="schedule-container">
+    <div id="schedule-container" class="flex flex-col gap-2.5">
         <!-- Matches will be injected here by popup.js -->
     </div>
     <!-- make sure to remove dist/ before packaging -->

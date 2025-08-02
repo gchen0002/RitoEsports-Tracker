@@ -217,7 +217,7 @@ function renderMatches() {
     // Create and append an element for each match
     fullyFilteredMatches.forEach(match => {
         const matchElement = document.createElement('div');
-        matchElement.className = 'match';
+        matchElement.className = 'match-card';
         // Add live styling for running matches
         if (match.status === 'running') {
             matchElement.classList.add('live');
@@ -300,18 +300,18 @@ function renderMatches() {
         }
         matchElement.innerHTML = `
             <div class="match-header">
-                <div class="league">${title}</div>
+                <div class="league-title">${title}</div>
                 ${generateWatchLinksHTML(match.streams, match.status)}
             </div>
-            <div class="teams">
+            <div class="teams-container">
                 <div class="team ${teamAIsWinner ? 'winner' : ''}">
-                    ${match.teamA_logo ? `<img src="${match.teamA_logo}" alt="${match.teamA}" class="logo">` : ''}
-                    <span>${match.teamA}</span>
+                    ${match.teamA_logo ? `<img src="${match.teamA_logo}" alt="${match.teamA}" class="team-logo">` : ''}
+                    <span class="team-name">${match.teamA}</span>
                 </div>
-                ${scoreDisplay || '<div class="vs">vs</div>'}
+                ${scoreDisplay || '<div class="vs-separator">vs</div>'}
                 <div class="team ${teamBIsWinner ? 'winner' : ''}">
-                    ${match.teamB_logo ? `<img src="${match.teamB_logo}" alt="${match.teamB}" class="logo">` : ''}
-                    <span>${match.teamB}</span>
+                    ${match.teamB_logo ? `<img src="${match.teamB_logo}" alt="${match.teamB}" class="team-logo">` : ''}
+                    <span class="team-name">${match.teamB}</span>
                 </div>
             </div>
             <div class="match-time">${timeDisplay}</div>
@@ -531,7 +531,7 @@ function handleFindStream(button) {
     try {
         console.log('Find Stream button clicked');
         // Get the match element and extract team names
-        const matchElement = button.closest('.match');
+        const matchElement = button.closest('.match-card');
         if (!matchElement) {
             console.log('No match element found');
             return;
@@ -541,7 +541,7 @@ function handleFindStream(button) {
             const teamA = ((_a = teamElements[0].textContent) === null || _a === void 0 ? void 0 : _a.trim()) || '';
             const teamB = ((_b = teamElements[1].textContent) === null || _b === void 0 ? void 0 : _b.trim()) || '';
             // Get league name from the header
-            const leagueElement = matchElement.querySelector('.league');
+            const leagueElement = matchElement.querySelector('.league-title');
             const leagueName = ((_c = leagueElement === null || leagueElement === void 0 ? void 0 : leagueElement.textContent) === null || _c === void 0 ? void 0 : _c.trim()) || '';
             // Create search query
             const searchQuery = `"${teamA}" vs "${teamB}" ${leagueName} live stream valorant`;

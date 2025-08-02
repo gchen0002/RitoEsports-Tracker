@@ -1,15 +1,11 @@
 {
   "manifest_version": 3,
   "name": "RitoEsports Tracker",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Real-time esports schedules for League of Legends and Valorant tournaments with live match detection.",
   "action": {
     "default_popup": "popup.html"
   },
-  "permissions": [
-    "storage",
-    "tabs"
-  ],
   "host_permissions": [
     "https://p4w4yuvikkpnvjvnbsmkybd7de0cgqqn.lambda-url.us-east-1.on.aws/*"
   ],

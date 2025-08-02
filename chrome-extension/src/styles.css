@@ -1,0 +1,248 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom component classes for complex elements */
+@layer components {
+  .match-card {
+    @apply bg-white border border-gray-200 rounded-lg p-4 transition-all duration-200 hover:shadow-md hover:border-gray-300;
+  }
+  
+  .match-card.live {
+    @apply border-2 border-red-500 bg-gradient-to-br from-white to-red-50 shadow-lg;
+    box-shadow: 0 0 12px rgba(220, 53, 69, 0.2);
+  }
+  
+  .match-header {
+    @apply flex justify-between items-center mb-2 pb-1 border-b border-gray-100;
+  }
+  
+  .match-card.live .match-header {
+    @apply border-red-200;
+  }
+  
+  .league-title {
+    @apply font-semibold text-xs text-gray-600 uppercase tracking-wide;
+  }
+  
+  .teams-container {
+    @apply flex items-center gap-3;
+  }
+  
+  .team {
+    @apply flex items-center gap-2.5 flex-1 transition-all duration-200;
+  }
+  
+  .team:last-child {
+    @apply justify-end flex-row-reverse;
+  }
+  
+  .team-name {
+    @apply text-sm font-medium text-gray-800;
+  }
+  
+  .team.winner .team-name {
+    @apply font-semibold text-blue-600;
+    text-shadow: 0 0 2px rgba(0, 123, 255, 0.2);
+  }
+  
+  .vs-separator {
+    @apply text-sm text-gray-500 font-medium px-2;
+  }
+  
+  .match-card.live .vs-separator {
+    @apply text-red-500 font-semibold;
+  }
+  
+  .score-container {
+    @apply flex items-center gap-2 font-bold text-base;
+  }
+  
+  .score {
+    @apply bg-gray-50 border border-gray-200 rounded px-2.5 py-1.5 min-w-7 text-center text-gray-700 transition-all duration-200 font-semibold;
+  }
+  
+  .score.winner {
+    @apply bg-green-100 border-green-300 text-green-800;
+    box-shadow: 0 0 6px rgba(40, 167, 69, 0.3);
+  }
+  
+  .score-separator {
+    @apply text-gray-600 font-normal text-sm;
+  }
+  
+  .team-logo {
+    @apply w-6 h-6 object-contain rounded;
+    max-width: 1.5rem !important;
+    max-height: 1.5rem !important;
+    flex-shrink: 0;
+  }
+  
+  .match-time {
+    @apply text-sm text-gray-600 font-medium;
+  }
+  
+  .match-summary {
+    @apply flex flex-col items-end gap-1 text-right;
+  }
+  
+  .winner-indicator {
+    @apply text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded px-2 py-0.5;
+  }
+  
+  .series-info {
+    @apply text-xs text-gray-600 font-medium;
+  }
+  
+  .live-indicator {
+    @apply inline-flex items-center gap-1.5 text-xs font-bold text-red-500 uppercase tracking-wide;
+  }
+  
+  .live-dot {
+    @apply w-2 h-2 bg-red-500 rounded-full animate-pulse;
+  }
+  
+  .match-summary .live-indicator {
+    @apply text-xs font-semibold text-red-500 bg-red-50 border border-red-200 rounded px-2 py-0.5 normal-case tracking-normal;
+  }
+  
+  .status-indicator {
+    @apply absolute top-2 right-2 text-xs font-bold px-1.5 py-0.5 rounded text-xs uppercase;
+  }
+  
+  .status-indicator.canceled {
+    @apply bg-red-100 text-red-800 border border-red-200;
+  }
+  
+  .toggle-container {
+    @apply flex border border-gray-300 rounded-md overflow-hidden;
+  }
+  
+  .toggle-btn {
+    @apply bg-white border-none px-3 py-1.5 cursor-pointer text-sm text-gray-700 transition-colors duration-200;
+  }
+  
+  .toggle-btn.active {
+    @apply bg-blue-500 text-white;
+  }
+  
+  .toggle-btn:not(.active):hover {
+    @apply bg-gray-100;
+  }
+  
+  .filters-container {
+    @apply flex gap-2 mt-2.5 justify-center;
+  }
+  
+  .filter-btn {
+    @apply bg-gray-100 border border-gray-300 rounded px-2.5 py-1 cursor-pointer text-xs text-gray-800 transition-all duration-200;
+  }
+  
+  .filter-btn.active {
+    @apply bg-gray-800 text-white border-gray-800;
+  }
+  
+  .filter-btn:not(.active):hover {
+    @apply bg-gray-200;
+  }
+  
+  .time-filter-container {
+    @apply flex justify-center my-4;
+  }
+  
+  .time-filter-btn {
+    @apply bg-white border border-gray-300 px-3 py-1.5 cursor-pointer text-sm text-gray-700 transition-colors duration-200;
+  }
+  
+  .time-filter-btn:first-child {
+    @apply rounded-l-md border-r-0;
+  }
+  
+  .time-filter-btn:not(:first-child):not(:last-child) {
+    @apply border-r-0;
+  }
+  
+  .time-filter-btn:last-child {
+    @apply rounded-r-md;
+  }
+  
+  .time-filter-btn.active {
+    @apply bg-gray-800 text-white border-gray-800;
+  }
+  
+  .watch-btn {
+    @apply bg-gradient-to-br from-red-500 to-red-600 text-white border-none px-2.5 py-1.5 rounded text-xs font-medium cursor-pointer transition-all duration-200 flex items-center gap-1 min-w-16 justify-center no-underline;
+    box-shadow: 0 1px 3px rgba(220, 53, 69, 0.2);
+  }
+  
+  .watch-btn:hover {
+    @apply bg-gradient-to-br from-red-600 to-red-700 no-underline text-white transform -translate-y-0.5;
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
+  }
+  
+  .watch-btn.find-stream {
+    @apply bg-gradient-to-br from-gray-500 to-gray-600;
+    box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
+  }
+  
+  .watch-btn.find-stream:hover {
+    @apply bg-gradient-to-br from-gray-600 to-gray-700;
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.4);
+  }
+  
+  .watch-dropdown {
+    @apply relative inline-block;
+  }
+  
+  .watch-dropdown:hover .watch-btn {
+    @apply bg-gradient-to-br from-red-600 to-red-700 transform -translate-y-0.5;
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+  }
+  
+  .dropdown-content {
+    @apply hidden absolute bg-white min-w-32 z-[1000] rounded overflow-hidden top-full mt-1 right-0 left-auto border border-gray-200;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
+    max-width: 10rem;
+  }
+  
+  .watch-dropdown:hover .dropdown-content,
+  .watch-dropdown .dropdown-content:hover {
+    @apply block;
+  }
+  
+  .watch-dropdown::before {
+    @apply content-[''] absolute top-full left-0 right-0 h-2 bg-transparent z-[999];
+  }
+  
+  .dropdown-content a {
+    @apply text-gray-800 px-3 py-2 no-underline block text-xs font-medium transition-colors duration-200 border-b border-gray-50 whitespace-nowrap overflow-hidden text-ellipsis relative;
+  }
+  
+  .dropdown-content a:last-child {
+    @apply border-b-0;
+  }
+  
+  .dropdown-content a:hover {
+    @apply bg-gray-50 text-gray-700;
+  }
+  
+  .dropdown-content a.official {
+    @apply text-blue-500 font-semibold;
+  }
+  
+  .loading {
+    @apply text-center py-10 px-5 text-gray-600 text-sm;
+  }
+  
+  .error-message {
+    @apply text-center py-10 px-5 text-red-500;
+  }
+  
+  .error-message p {
+    @apply my-2 text-sm;
+  }
+  
+  .error-message p:first-child {
+    @apply font-semibold text-base;
+  }
+}
