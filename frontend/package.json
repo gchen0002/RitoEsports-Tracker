@@ -11,6 +11,7 @@
     "copy-static": "copy public\\*.* dist\\",
     "package": "npm run build && powershell Compress-Archive -Path 'dist\\*' -DestinationPath 'RitoEsports-Tracker-v1.1.0.zip' -Force",
     "dev": "npm run build-css:watch",
+    "dev-full": "npm run build-css:watch & npx tsc --watch",
     "clean": "rmdir /s /q dist && mkdir dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
