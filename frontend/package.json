@@ -1,0 +1,32 @@
+{
+  "name": "ritoesports-frontend",
+  "version": "1.1.0",
+  "description": "RitoEsports Tracker Chrome Extension Frontend",
+  "main": "dist/popup.js",
+  "scripts": {
+    "build-css": "tailwindcss -i ./src/styles.css -o ./dist/style.css --watch=false",
+    "build-css:watch": "tailwindcss -i ./src/styles.css -o ./dist/style.css --watch",
+    "build-js": "npx tsc",
+    "build": "npm run build-css && npm run build-js && npm run copy-static",
+    "copy-static": "copy public\\*.* dist\\",
+    "package": "npm run build && powershell Compress-Archive -Path 'dist\\*' -DestinationPath 'RitoEsports-Tracker-v1.1.0.zip' -Force",
+    "dev": "npm run build-css:watch",
+    "clean": "rmdir /s /q dist && mkdir dist",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "chrome-extension",
+    "esports",
+    "valorant",
+    "lol"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^4.9.5"
+  }
+}

@@ -1,11 +1,14 @@
 # Dependencies
 /node_modules
 /chrome-extension/node_modules
+/frontend/node_modules
 /backend/node_modules
 
 # Build artifacts
 /chrome-extension/dist
+/frontend/dist
 /backend/cdk.out
+chrome-extension/
 
 # Local Environment Files
 /backend/.env
@@ -24,3 +27,5 @@ overview.txt
 .cursor
 response.json
 extension.zip
+SECURITY-DEPLOYMENT-GUIDE.md
+DEPLOYMENT-SUCCESS.md
