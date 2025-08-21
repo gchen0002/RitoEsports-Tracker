@@ -1242,10 +1242,6 @@ video {
   display: flex;
 }
 
-.table {
-  display: table;
-}
-
 .w-extension {
   width: 380px;
 }

@@ -11,6 +11,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 console.log("Rito Esports Tracker popup script loaded!");
 // The URL for our deployed backend API
 const API_URL = 'https://p4w4yuvikkpnvjvnbsmkybd7de0cgqqn.lambda-url.us-east-1.on.aws/';
+// Performance optimization: Preload critical elements
+let isInitialized = false;
 // --- DOM Elements ---
 const container = document.getElementById("schedule-container");
 const valorantBtn = document.getElementById("valorant-btn");
@@ -110,7 +112,7 @@ function renderMatches() {
                 case 'lec':
                     return seriesName.includes('lec') || leagueName.includes('lec');
                 case 'lta':
-                    // LTA is Liga Latinoamérica, which is 'LLA' in the API
+                    // LTA is Liga Latinoam├⌐rica, which is 'LLA' in the API
                     return seriesName.includes('lla') || leagueName.includes('lla');
                 case 'tournaments':
                     return seriesName.includes('worlds') || seriesName.includes('mid-season invitational') || seriesName.includes('msi') ||
@@ -327,6 +329,12 @@ function main() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             console.log('RitoEsports Tracker: Starting main function');
+            // Prevent multiple initializations
+            if (isInitialized) {
+                console.log('Extension already initialized');
+                return;
+            }
+            isInitialized = true;
             // Setup button listeners first
             valorantBtn === null || valorantBtn === void 0 ? void 0 : valorantBtn.addEventListener('click', () => selectGame('Valorant'));
             lolBtn === null || lolBtn === void 0 ? void 0 : lolBtn.addEventListener('click', () => selectGame('LoL'));
@@ -489,9 +497,9 @@ function fetchScheduleData() {
                 }
             }
             console.log('RitoEsports Tracker: Fetching fresh data from API');
-            // Fetch fresh data with timeout
+            // Fetch fresh data with optimized timeout
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout for better UX
             // Lambda Function URL
             const response = yield fetch(API_URL, {
                 signal: controller.signal,
@@ -547,25 +555,15 @@ function handleFindStream(button) {
             const searchQuery = `"${teamA}" vs "${teamB}" ${leagueName} live stream valorant`;
             const twitchSearchUrl = `https://www.twitch.tv/search?term=${encodeURIComponent(searchQuery)}`;
             console.log('Opening Twitch search for:', searchQuery);
-            // Try chrome.tabs API first, fallback to window.open
-            if (chrome && chrome.tabs) {
-                chrome.tabs.create({ url: twitchSearchUrl });
-            }
-            else {
-                window.open(twitchSearchUrl, '_blank');
-            }
+            // Open in new tab using window.open (no permissions needed)
+            window.open(twitchSearchUrl, '_blank');
         }
     }
     catch (error) {
         console.error('Error in findStream:', error);
         // Fallback: open general Twitch search
         const fallbackUrl = 'https://www.twitch.tv/directory/category/valorant';
-        if (chrome && chrome.tabs) {
-            chrome.tabs.create({ url: fallbackUrl });
-        }
-        else {
-            window.open(fallbackUrl, '_blank');
-        }
+        window.open(fallbackUrl, '_blank');
     }
 }
 // Function to detect streaming platform from URL
